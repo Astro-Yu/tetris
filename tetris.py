@@ -5,24 +5,30 @@ import threading
 import keyboard
 
 tetris_shapes = [
-    [[1, 1, 1, 1]],
-    [[1, 1, 1], [0, 1, 0]],
-    [[1, 1, 1], [0, 0, 1]],
-    [[1, 1, 1], [1, 0, 0]],
-    [[1, 1, 0], [0, 1, 1]],
+    [[1, 1, 1, 1]],         # I
+    [[1, 1, 1], [0, 1, 0]], # T
+    [[1, 1, 1], [0, 0, 1]], # J
+    [[1, 1, 1], [1, 0, 0]], # L
+    [[1, 1, 0], [0, 1, 1]], # Z
+    [[0, 1, 1], [1, 1, 0]], # S
+    [[1, 1],[1, 1]]         # O
 ]
+
+
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 class TetrisBoard:
-    def __init__(self, width, height):
+    def __init__(self, width, height, score):
         self.width = width
         self.height = height
+        self.score = score
         self.board = [[0] * self.width for _ in range(self.height)]
         self.current_block = None
         self.current_block_position = [0, 0] # 0번 인덱스 -> 위아래, 1번 인덱스 -> 좌우
         self.lock = threading.Lock()
+        self.game_over = False
 
     def new_block(self):
         self.current_block = random.choice(tetris_shapes)
@@ -73,11 +79,25 @@ class TetrisBoard:
         if self.is_valid_move(rotated_block, self.current_block_position):
             self.current_block = rotated_block
 
+    def add_point(self):
+        self.score += 100
+        
     def clear_lines(self):
         full_lines = [i for i, row in enumerate(self.board) if all(row)]
-        for i in reversed(full_lines):
-            del self.board[i]
-            self.board.insert(0, [[0] for _ in range(self.width)])
+
+        if full_lines:
+            # 전체 줄이 없는 새로운 보드 생성
+            new_board = [[0] * self.width for _ in range(self.height)]
+            new_index = self.height - 1
+
+            for i in reversed(range(self.height)):
+                if i not in full_lines:
+                    new_board[new_index] = self.board[i]
+                    new_index -= 1
+
+            # 새로운 배열로 보드 업데이트
+            self.board = new_board
+            self.add_point()
 
     def __str__(self):
         # 초기화된 디스플레이 보드 생성
@@ -115,14 +135,16 @@ class TetrisBoard:
 
 
 def run_game(board):
-    while True:
+    while not board.game_over:
+        score = board.score
         clear_screen()
         print(board)
+        print("SCORE : ", score)
         time.sleep(0.5)
         board.move_block('S')
 
 def main():
-    board = TetrisBoard(width=10, height=20)
+    board = TetrisBoard(width=10, height=20, score=0)
     board.new_block()
     game_thread = threading.Thread(target=run_game, args=(board,))
     game_thread.start()
@@ -131,6 +153,10 @@ def main():
     keyboard.add_hotkey('d', lambda: board.move_block('D'))
     keyboard.add_hotkey('s', lambda: board.move_block('S'))
     keyboard.add_hotkey('w', lambda: board.rotate_block())
+    keyboard.add_hotkey('esc', lambda: exit_game(board))
+
+def exit_game(board):
+    board.game_over = True
 
 if __name__ == "__main__":
     main()
