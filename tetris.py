@@ -6,10 +6,9 @@ import keyboard
 
 tetris_shapes = [
     [[1, 1, 1, 1]],
-    [[1, 1, 1], [1]],
-    [[1, 1, 1],[0, 0, 1]],
-    [[1, 1, 1], [0, 1]],
-    [[1, 1, 1], [1, 0]],
+    [[1, 1, 1], [0, 1, 0]],
+    [[1, 1, 1], [0, 0, 1]],
+    [[1, 1, 1], [1, 0, 0]],
     [[1, 1, 0], [0, 1, 1]],
 ]
 
@@ -20,7 +19,7 @@ class TetrisBoard:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.board =  [[[0] for _ in range(self.width)] for _ in range(self.height)]
+        self.board = [[0] * self.width for _ in range(self.height)]
         self.current_block = None
         self.current_block_position = [0, 0] # 0번 인덱스 -> 위아래, 1번 인덱스 -> 좌우
         self.lock = threading.Lock()
@@ -44,7 +43,7 @@ class TetrisBoard:
             for j in range(len(self.current_block[0])):
                 if self.current_block[i][j]:
                     row, col = self.current_block_position[0] + i, self.current_block_position[1] + j
-                    self.board[row][col] = [[1]]  # 2차원 리스트로 저장
+                    self.board[row][col] = 1  # 2차원 리스트로 저장
 
         self.clear_lines()
         self.new_block() 
@@ -84,15 +83,6 @@ class TetrisBoard:
         # 초기화된 디스플레이 보드 생성
         display_board = [['  ' for _ in range(self.width)] for _ in range(self.height)]
 
-        # 현재 블록을 제외한 모든 블록을 디스플레이 보드에 표시
-        for block in self.board:
-            for i in range(len(block)):
-                for j in range(len(block[0])):
-                    row, col = i, j
-                    if 0 <= row < self.height and 0 <= col < self.width:
-                        if block[i][j]:
-                            display_board[row][col] = '[]'
-
         # 현재 블록을 디스플레이 보드에 표시
         for i in range(len(self.current_block)):
             for j in range(len(self.current_block[0])):
@@ -104,17 +94,25 @@ class TetrisBoard:
                     if self.current_block[i][j]:
                         display_board[row][col] = '[]'
 
+        for i in range(self.height):
+            for j in range(self.width):
+                if self.board[i][j]:
+                    display_board[i][j] = '[]'
+
+        
         # 상단 경계
         display_board.insert(0, ['--'] * self.width)
         # 하단 경계
         display_board.append(['--'] * self.width)
 
         # 좌우 경계
-        for row in display_board:
+        for row in display_board[1:-1]:  # Skip the first and last rows
             row.insert(0, '|')
             row.append('|')
 
         return '\n'.join([''.join(row) for row in display_board])
+
+
 
 def run_game(board):
     while True:
