@@ -94,11 +94,11 @@ class TetrisBoard:
                 if i not in full_lines:
                     new_board[new_index] = self.board[i]
                     new_index -= 1
+                    self.add_point()
 
             # 새로운 배열로 보드 업데이트
             self.board = new_board
-            self.add_point()
-
+            
     def __str__(self):
         # 초기화된 디스플레이 보드 생성
         display_board = [['  ' for _ in range(self.width)] for _ in range(self.height)]
@@ -136,10 +136,9 @@ class TetrisBoard:
 
 def run_game(board):
     while not board.game_over:
-        score = board.score
         clear_screen()
         print(board)
-        print("SCORE : ", score)
+        print("SCORE : ", board.score)
         time.sleep(0.5)
         board.move_block('S')
 
